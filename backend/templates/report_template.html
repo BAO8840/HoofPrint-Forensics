@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    @page { size: A4; margin: 2.2cm; }
+    body {
+        font-family: 'Helvetica', 'Arial', sans-serif;
+        color: #1f2430;
+        font-size: 11pt;
+        line-height: 1.5;
+    }
+    h1, h2, .serif {
+        font-family: 'Georgia', 'Times New Roman', serif;
+    }
+    .header {
+        border-bottom: 2px solid #2b3a67;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+    }
+    .header h1 {
+        color: #2b3a67;
+        font-size: 20pt;
+        margin: 0 0 4px 0;
+    }
+    .header .subtitle {
+        color: #6b6b6b;
+        font-size: 9pt;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    .section {
+        margin-bottom: 18px;
+    }
+    .section-title {
+        font-size: 9pt;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #b08d3f;
+        border-bottom: 1px solid #ddd6c5;
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+    }
+    table.kv {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    table.kv td {
+        padding: 4px 6px;
+        vertical-align: top;
+        font-size: 10pt;
+    }
+    table.kv td.label {
+        color: #6b6b6b;
+        width: 35%;
+        text-transform: uppercase;
+        font-size: 8pt;
+        letter-spacing: 0.5px;
+    }
+    .prediction-box {
+        background: #f7f5ef;
+        border: 1px solid #ddd6c5;
+        border-radius: 4px;
+        padding: 16px;
+        text-align: center;
+        margin-bottom: 16px;
+    }
+    .prediction-box .species {
+        font-size: 26pt;
+        font-family: 'Georgia', serif;
+        color: #2b3a67;
+        margin: 4px 0;
+    }
+    .prediction-box .confidence {
+        font-size: 13pt;
+        color: #b08d3f;
+        font-weight: bold;
+    }
+    .prob-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10pt;
+        margin: 4px 0;
+    }
+    .evidence-image {
+        max-width: 100%;
+        max-height: 220px;
+        border: 1px solid #ddd6c5;
+        border-radius: 4px;
+    }
+    .notice {
+        background: #fbf3e3;
+        border: 1px solid #e6d3a3;
+        border-radius: 4px;
+        padding: 10px 14px;
+        font-size: 9pt;
+        color: #6b5220;
+        margin-top: 20px;
+    }
+    .footer {
+        margin-top: 24px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd6c5;
+        font-size: 8pt;
+        color: #999;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>HoofPrint Forensics</h1>
+    <div class="subtitle">Forensic Analysis Report: {{ record.analysis_code }}</div>
+</div>
+
+<div class="section">
+    <div class="section-title">01 &middot; Case Information</div>
+    <table class="kv">
+        <tr>
+            <td class="label">Case ID</td><td>{{ record.case_id }}</td>
+            <td class="label">Evidence ID</td><td>{{ record.evidence_id }}</td>
+        </tr>
+        <tr>
+            <td class="label">Analyst</td><td>{{ record.analyst_name }}</td>
+            <td class="label">Collection Date</td><td>{{ record.collection_date or "&mdash;" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Collection Location</td><td colspan="3">{{ record.collection_location or "&mdash;" }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <div class="section-title">02 &middot; Evidence</div>
+    {% if record.image_url %}
+    <img class="evidence-image" src="{{ record.image_url }}" />
+    {% endif %}
+    {% if record.evidence_notes %}
+    <p style="margin-top:8px; font-size:10pt;">{{ record.evidence_notes }}</p>
+    {% endif %}
+</div>
+
+<div class="section">
+    <div class="section-title">03 &middot; Methodology</div>
+    <p style="font-size:10pt;">
+        The submitted image was classified using {{ record.model_version }}, a Random Forest
+        classifier trained on ResNet50-extracted image features, cross-checked against an
+        independent EfficientNetB0+LSTM deep learning model for agreement. Both models were
+        trained to discriminate between Cow, Goat, and Sheep hoofprint impressions.
+    </p>
+</div>
+
+<div class="section">
+    <div class="section-title">04 &middot; Classification Result</div>
+    <div class="prediction-box">
+        <div style="font-size:9pt; text-transform:uppercase; color:#6b6b6b;">Predicted Species</div>
+        <div class="species">{{ record.predicted_species | upper }}</div>
+        <div class="confidence">{{ record.confidence }}% confidence</div>
+    </div>
+    {% for species, prob in record.probability_distribution.items() %}
+    <div class="prob-row"><span>{{ species }}</span><span>{{ prob }}%</span></div>
+    {% endfor %}
+
+    {% if record.secondary_model_prediction %}
+    <p style="font-size:9pt; color:#6b6b6b; margin-top:10px;">
+        Cross-check (EfficientNetB0+LSTM): predicted <strong>{{ record.secondary_model_prediction }}</strong>
+        at {{ record.secondary_model_confidence }}% confidence.
+        {% if record.secondary_model_prediction != record.predicted_species %}
+        <strong style="color:#b04a3f;">Note: the two models disagree on this sample.</strong>
+        {% else %}
+        Both models agree.
+        {% endif %}
+    </p>
+    {% endif %}
+</div>
+
+<div class="section">
+    <div class="section-title">05 &middot; Analyst Verification</div>
+    <table class="kv">
+        <tr>
+            <td class="label">Status</td><td>{{ record.status | replace("_", " ") | title }}</td>
+        </tr>
+        {% if record.verified_by %}
+        <tr>
+            <td class="label">Verified By</td><td>{{ record.verified_by }}</td>
+            <td class="label">Verified At</td><td>{{ record.verified_at }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<div class="section">
+    <div class="section-title">06 &middot; Interpretation</div>
+    <p style="font-size:10pt;">
+        Based on the submitted hoofprint image, the machine-learning model classified the
+        specimen as {{ record.predicted_species }} with a confidence score of {{ record.confidence }}%.
+        This output represents analytical evidence and requires appropriate human review and
+        interpretation before any formal conclusion is drawn. The result should be considered
+        alongside other physical and documentary evidence.
+    </p>
+</div>
+
+<div class="notice">
+    <strong>Important:</strong> Classification outputs are for research and analytical purposes
+    only. All results require appropriate human review and interpretation before use in any
+    formal or legal context. This system does not constitute an official forensic determination.
+</div>
+
+<div class="footer">
+    HoofPrint Forensics &middot; AATU Final Year Project 2025/2026 &middot;
+    Generated {{ generated_at }}
+</div>
+
+</body>
+</html>
