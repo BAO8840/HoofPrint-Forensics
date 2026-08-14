@@ -35,7 +35,7 @@ cp .env.example .env
 
 **Run the backend:**
 ```bash
-AnalysisResult
+  uvicorn main:app --reload --port 8000
 ```
 
 First startup will take a minute — it's downloading ResNet50's ImageNet weights
