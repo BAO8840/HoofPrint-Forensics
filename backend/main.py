@@ -13,7 +13,8 @@ app = FastAPI(title="HoofPrint Forensics API")
 
 allowed_origins = os.environ.get(
     "ALLOWED_ORIGINS",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "https://hoofprint-forensics.vercel.app"
 ).split(",")
 
 app.add_middleware(
