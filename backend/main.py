@@ -1,5 +1,4 @@
 import os
-from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -7,21 +6,15 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.ml.inference import load_models
 from app.routers import analyze, records
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Load both models once at startup, not per-request — loading ResNet50 +
-    # EfficientNetB0 on every /analyze call would be extremely slow.
-    load_models()
-    yield
+app = FastAPI(title="HoofPrint Forensics API")
 
-
-app = FastAPI(title="HoofPrint Forensics API", lifespan=lifespan)
-
-allowed_origins = os.environ.get("ALLOWED_ORIGINS", "http://localhost:5173").split(",")
+allowed_origins = os.environ.get(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173"
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,

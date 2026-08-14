@@ -32,7 +32,7 @@ def _model_dir() -> str:
 
 
 def load_models():
-    """Call once at startup (see main.py's lifespan hook)."""
+    """Load the deployment models on first inference request."""
     global _rf_model, _eff_model, _resnet_feature_extractor
 
     model_dir = _model_dir()
@@ -69,8 +69,14 @@ def predict(file_bytes: bytes) -> dict:
     main result, plus the EfficientNet cross-check for the report/methodology
     section.
     """
-    if _rf_model is None or _eff_model is None:
-        raise RuntimeError("Models not loaded. Call load_models() at startup.")
+    global _rf_model, _eff_model, _resnet_feature_extractor
+
+    if (
+        _rf_model is None
+        or _eff_model is None
+        or _resnet_feature_extractor is None
+    ):
+        load_models()
 
     img_array = _load_image_from_bytes(file_bytes)
 
