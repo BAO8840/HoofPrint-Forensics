@@ -1,4 +1,5 @@
 import os
+import re
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -19,6 +20,7 @@ allowed_origins = os.environ.get(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=r"https://hoofprint-forensics.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
