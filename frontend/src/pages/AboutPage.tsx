@@ -23,7 +23,7 @@ export default function AboutPage() {
           <InfoItem label="Researchers" value="Okunola Micheal &amp; Bello Abdulsalam" />
           <InfoItem label="Institution" value="Abiola Ajimobi Technical University (AATU)" />
           <InfoItem label="Target Species" value="Cattle, Sheep and Goat" />
-          <InfoItem label="Classification Model" value="Convolutional Neural Network (HoofNet v1.0)" />
+          <InfoItem label="Classification Model" value="Random Forest on ResNet50 Features (HoofNet v1.0)" />
           <InfoItem label="Academic Year" value="2025 / 2026" />
         </div>
       </div>

@@ -25,6 +25,8 @@ import os
 # Force CPU-only TensorFlow before importing TensorFlow.
 # Render's free environment does not provide a CUDA GPU.
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("TF_NUM_INTEROP_THREADS", "1")
+os.environ.setdefault("TF_NUM_INTRAOP_THREADS", "1")
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
 import joblib
@@ -352,35 +354,19 @@ def _run_secondary_model(
 
 def predict(file_bytes: bytes) -> dict:
     """
-    Run both HoofPrint models sequentially.
+    Run the primary HoofNet v1.0 pipeline only.
 
-    Primary:
-        ResNet50 → Random Forest
-
-    Secondary:
-        EfficientNet/LSTM
-
-    The primary model remains the official HoofNet v1.0 result.
-    The secondary model remains an independent cross-check.
-
-    Models are intentionally NOT kept permanently in memory.
-    This is important for low-memory deployment environments.
+    The secondary EfficientNet/LSTM cross-check has been disabled
+    in the live deployment to fit within free-tier memory limits
+    (Render free tier: 512MB RAM). It remains available offline
+    for Grad-CAM visualization and research use.
     """
 
-    # -------------------------------------------------------------
-    # Validate model files
-    # -------------------------------------------------------------
     rf_path, eff_path = _get_model_paths()
 
-    # -------------------------------------------------------------
-    # Decode uploaded image ONCE.
-    # -------------------------------------------------------------
     img_array = _load_image_from_bytes(file_bytes)
 
     try:
-        # =========================================================
-        # PHASE 1 — PRIMARY MODEL
-        # =========================================================
         (
             primary_species,
             primary_confidence,
@@ -395,41 +381,15 @@ def predict(file_bytes: bytes) -> dict:
             f"{primary_species} ({primary_confidence}%)"
         )
 
-        # =========================================================
-        # PHASE 2 — SECONDARY MODEL
-        #
-        # ResNet50 has already been released before we get here.
-        # =========================================================
-        (
-            secondary_species,
-            secondary_confidence,
-        ) = _run_secondary_model(
-            img_array,
-            eff_path,
-        )
-
-        print(
-            f"Secondary result: "
-            f"{secondary_species} ({secondary_confidence}%)"
-        )
-
-        # =========================================================
-        # FINAL RESPONSE
-        #
-        # Response structure is intentionally unchanged so the
-        # existing frontend does not need to be modified.
-        # =========================================================
         return {
             "predicted_species": primary_species,
             "confidence": primary_confidence,
             "probability_distribution": rf_distribution,
             "model_version": "HoofNet v1.0",
-            "secondary_model_prediction": secondary_species,
-            "secondary_model_confidence": secondary_confidence,
+            "secondary_model_prediction": None,
+            "secondary_model_confidence": None,
         }
 
     finally:
-        # Release the uploaded image array.
         del img_array
-
         gc.collect()

@@ -145,9 +145,12 @@
     <div class="section-title">03 &middot; Methodology</div>
     <p style="font-size:10pt;">
         The submitted image was classified using {{ record.model_version }}, a Random Forest
-        classifier trained on ResNet50-extracted image features, cross-checked against an
-        independent EfficientNetB0+LSTM deep learning model for agreement. Both models were
-        trained to discriminate between Cow, Goat, and Sheep hoofprint impressions.
+        classifier trained on ResNet50-extracted image features. The model was trained to
+        discriminate between Cow, Goat, and Sheep hoofprint impressions.
+        {% if record.secondary_model_prediction %}
+        Results were additionally cross-checked against an independent EfficientNetB0+LSTM
+        deep learning model for agreement.
+        {% endif %}
     </p>
 </div>
 

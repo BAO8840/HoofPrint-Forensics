@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
@@ -11,6 +11,6 @@ def generate_report_pdf(record: dict) -> bytes:
     template = _env.get_template("report_template.html")
     html_content = template.render(
         record=record,
-        generated_at=datetime.utcnow().strftime("%d %b %Y, %H:%M UTC"),
+        generated_at=datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M GMT"),
     )
     return HTML(string=html_content).write_pdf()
