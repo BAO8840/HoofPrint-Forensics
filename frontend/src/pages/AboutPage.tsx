@@ -24,7 +24,7 @@ export default function AboutPage() {
           <InfoItem label="Institution" value="Abiola Ajimobi Technical University (AATU)" />
           <InfoItem label="Target Species" value="Cattle, Sheep and Goat" />
           <InfoItem label="Classification Model" value="Convolutional Neural Network (HoofNet v1.0)" />
-          <InfoItem label="Academic Year" value="2024 / 2025" />
+          <InfoItem label="Academic Year" value="2025 / 2026" />
         </div>
       </div>
 
