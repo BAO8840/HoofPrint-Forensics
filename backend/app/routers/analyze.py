@@ -3,6 +3,7 @@ from datetime import datetime, date
 from typing import Optional
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi.concurrency import run_in_threadpool
 
 from app.ml.inference import predict
 from app.cloudinary_utils import upload_hoofprint_image
@@ -34,19 +35,18 @@ async def analyze_hoofprint(
     if len(file_bytes) == 0:
         raise HTTPException(400, "Uploaded file is empty.")
 
-    # 1. Run both models
+    # Run inference off the event loop so health checks aren't blocked
     try:
-        result = predict(file_bytes)
+        result = await run_in_threadpool(predict, file_bytes)
     except Exception as e:
         raise HTTPException(500, f"Model inference failed: {e}")
 
-    # 2. Upload the evidence image to Cloudinary
+    # Upload the evidence image to Cloudinary
     try:
         upload = upload_hoofprint_image(file_bytes, image.filename or "hoofprint.jpg")
     except Exception as e:
         raise HTTPException(500, f"Image upload failed: {e}")
 
-    # 3. Persist the record in Supabase
     parsed_date = None
     if collection_date:
         try:
